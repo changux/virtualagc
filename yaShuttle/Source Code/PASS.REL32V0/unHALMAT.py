@@ -611,7 +611,7 @@ def dumbPrintOperands(operands, halmatNumber, parentMnemonic):
                 print("%02X " % o, end = "")
         if operandMnemonic == "  0":
             if parentMnemonic == "PXRC":
-                print(f"  (Matchin XREC is at HALMAT {operand[0]})", end="")
+                print(f"  (Matching XREC is at HALMAT {operand[0]})", end="")
             elif parentMnemonic == "SMRK":
                 print(f"  (HAL/S statement {operand[0]})", end="")
         elif operandMnemonic == "LIT" and operand[0] < len(literals):
@@ -746,7 +746,7 @@ for recordNum in range(numRecords):
             print(f"%s({numberOfOperands}) %02X=\"%s\" %d %d" % (mnemonic,
                                           field1, bfncTypes[field1], field4, field5))
             dumbPrintOperands(operands, originalWordNumber, mnemonic)
-        elif mnemonic == "?":
+        elif False and mnemonic == "?":
             cl = (operatorType >> 8) & 0xFF
             print("Unknown Class %d operator type %02X" % \
                   (cl, operatorType & 0xFF))
