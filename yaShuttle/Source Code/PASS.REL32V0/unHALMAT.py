@@ -264,7 +264,7 @@ operatorMnemonics = {
     0x59: "PMHD",
     0x5A: "PMAR",
     0x5B: "PMIN",
-    0x101: "BASN", # Confused about XASN ... is that a real type?
+    0x101: "BASN",
     0x102: "BAND",
     0x103: "BOR",
     0x104: "BNOT",
@@ -627,11 +627,11 @@ def dumbPrintOperands(operands, halmatNumber, parentMnemonic):
     for operand in operands:
         operandMnemonic = ""
         halmatNumber += 1
-        print(f"  HALMAT {halmatNumber}\t", end = "")
+        print(f"  HALMAT #{halmatNumber}\t  | ", end = "")
         for i in range(len(operand)):
             o = operand[i]
             if i == 0:
-                print("%3X " % o, end="")
+                print("%03X " % o, end="")
             elif i == 2:
                 operandMnemonic = qMnemonics[o]
                 print("%02X(%s) " % (o, operandMnemonic), end = "")
@@ -639,9 +639,9 @@ def dumbPrintOperands(operands, halmatNumber, parentMnemonic):
                 print("%02X " % o, end = "")
         if operandMnemonic == "  0":
             if parentMnemonic == "PXRC":
-                print(f"  (Matching XREC is at HALMAT {operand[0]})", end="")
+                print(f"  (Matching XREC is at HALMAT #{operand[0]})", end="")
             elif parentMnemonic == "SMRK":
-                print(f"  (HAL/S statement {operand[0]})", end="")
+                print(f"  (HAL/S statement #{operand[0]})", end="")
         elif operandMnemonic == "LIT" and operand[0] < len(literals):
             literal = literals[operand[0]]
             type = literal["type"]
@@ -655,7 +655,7 @@ def dumbPrintOperands(operands, halmatNumber, parentMnemonic):
                 typeName = "BIT"
             else:
                 typeName = "?"
-            print(f"  {colorize}(Literal {operand[0]}: {typeName} {value}){uncolorize}", end="")
+            print(f"  {colorize}(Literal #{operand[0]}: {typeName} {value}){uncolorize}", end="")
         elif operandMnemonic == "SYT" and operand[0] < len(symbolTable):
             symbol = symbolTable[operand[0]]
             name = symbol["SYM_NAME"].strip("'")
@@ -671,13 +671,13 @@ def dumbPrintOperands(operands, halmatNumber, parentMnemonic):
                     flagString = "0x%08X" % flags
                 else:
                     flagString += " 0x%08X" % flags
-            print(f"  {colorize}(Symbol {operand[0]}: {name}, {flagString})", end="")
+            print(f"  {colorize}(Symbol #{operand[0]}: {name}, {flagString})", end="")
         elif operandMnemonic == "VAC":
-            print(f"  (Result from operation at HALMAT {operand[0]})", end="")
+            print(f"  (Result from operation at HALMAT #{operand[0]})", end="")
         elif operandMnemonic == "INL":
             print(f"  (Bookkeeping label #{operand[0]})", end="")
         elif operandMnemonic == "IMD":
-            print(f"  (Immediate integer data {operand[0]}=0x{'%X'%operand[0]})", end="")
+            print(f"  (Immediate integer data {operand[0]} 0x{'%X'%operand[0]})", end="")
         print()
 
 # I don't know if this works for all operands, but ...
@@ -726,7 +726,7 @@ for recordNum in range(numRecords):
         description = ""
         if mnemonic in operatorDescriptions:
             description = ", " + operatorDescriptions[mnemonic]
-        print(f"  HALMAT %d (%03X{description}): " % (originalWordNumber, 
+        print(f"  HALMAT #%d (0x%03X{description}): " % (originalWordNumber, 
                                                    operatorType), end = "")
         if mnemonic == "NOP":
             print(f"NOP({numberOfOperands})")
