@@ -5,7 +5,9 @@ in the U.S., and may be copied, modified, or distributed for any purpose
 whatever free of charge.
 
 The purpose of this program is to decode so-called "LIT files" produced/modified
-by various passes of the HAL/S compiler into human-readable form.
+by various passes of the HAL/S compiler into human-readable form.  This 
+is designed as a module, with just the function `getLiteralsFromFile` exposed,
+but it can be run as a standalone program too.
 
 Usage:
     unLitFile.py LITFILE.bin MEMORY.gz
@@ -65,56 +67,78 @@ depends on the type of literal:
 '''
 
 import sys
+import os
 import gzip
 from asciiToEbcdic import *
 from ibmHex import *
 
-# Read the litfile.
-f = open(sys.argv[1], "rb")
-litfile = f.read()
-f.close()
+def getLiteralsFromFile(litfileName, memoryName):
+    literals = []
+    
+    def formWord(page, offset):
+        return (page[offset] << 24) + (page[offset+1] << 16) + \
+            (page[offset+2] << 8) + page[offset+3]
 
-# Read the memory image.
-if sys.argv[2].endswith(".gz"):
-    f = gzip.open(sys.argv[2], "rb")
-else:
-    f = open(sys.argv[2], "rb")
-memory = f.read()
-f.close()
+    # Read the litfile.
+    f = open(litfileName, "rb")
+    litfile = f.read()
+    f.close()
+    
+    # Read the memory image.
+    if memoryName.endswith(".gz"):
+        f = gzip.open(memoryName, "rb")
+    else:
+        f = open(memoryName, "rb")
+    memory = f.read()
+    f.close()
 
-#print(len(litfile))
-#print(len(memory))
+    # Loop on 130-literal (1560-byte)  records of the litfile.
+    literalNumber = -1
+    recordOffset = 0
+    while recordOffset < len(litfile):
+        # Yes, the following isn't very efficient.  Who cares?  Shut up!
+        page1 = litfile[recordOffset : recordOffset+520]
+        page2 = litfile[recordOffset+520 : recordOffset + 1040]
+        page3 = litfile[recordOffset+1040 : recordOffset + 1560]
+        # Loop on the literals in the record.
+        for offset in range(0, 520, 4):
+            literalNumber += 1
+            type = page1[offset+3]
+            if type == 0:
+                length = page2[offset]
+                pointer = (page2[offset+1] << 16) + (page2[offset+2] << 8) + page2[offset+3]
+                value = ""
+                if length > 0 or pointer > 0:
+                    length += 1
+                    for i in range(pointer, pointer+length):
+                        value += ebcdicToAscii[memory[i]]
+                #print("Literal %d: STRING '%s'" % (literalNumber, value))
+            elif type == 1:
+                value = fromFloatIBM(formWord(page2, offset), formWord(page3, offset))
+                #print("Literal %d: FIXED  %lf" % (literalNumber, value))
+            elif type == 2:
+                value = formWord(page2, offset)
+                #print("Literal %d: BIT    %d" % (literalNumber, value))
+            literals.append({ "type": type, "value": value })
+        recordOffset += 1560
+    
+    return literals
 
-def formWord(page, offset):
-    return (page[offset] << 24) + (page[offset+1] << 16) + \
-        (page[offset+2] << 8) + page[offset+3]
-
-# Loop on 130-literal (1560-byte)  records of the litfile.
-literalNumber = -1
-recordOffset = 0
-while recordOffset < len(litfile):
-    # Yes, the following isn't very efficient.  Who cares?  Shut up!
-    page1 = litfile[recordOffset : recordOffset+520]
-    page2 = litfile[recordOffset+520 : recordOffset + 1040]
-    page3 = litfile[recordOffset+1040 : recordOffset + 1560]
-    # Loop on the literals in the record.
-    for offset in range(0, 520, 4):
-        literalNumber += 1
-        type = page1[offset+3]
+if __name__ == "__main__":
+    try:
+        literals = getLiteralsFromFile(sys.argv[1], sys.argv[2])
+    except:
+        print("Error!  Read comments in unLitfile.py for usage instructions.")
+        os._exit(1)
+    
+    for literalNumber in range(len(literals)):
+        type = literals[literalNumber]["type"]
+        value = literals[literalNumber]["value"]
         if type == 0:
-            length = page2[offset]
-            pointer = (page2[offset+1] << 16) + (page2[offset+2] << 8) + page2[offset+3]
-            value = ""
-            if length > 0 or pointer > 0:
-                length += 1
-                for i in range(pointer, pointer+length):
-                    value += ebcdicToAscii[memory[i]]
             if value != "":
-                print("Literal %d: STRING '%s'" % (literalNumber, value))
+                print("Literal %4d: STRING '%s'" % (literalNumber, value))
         elif type == 1:
-            value = fromFloatIBM(formWord(page2, offset), formWord(page3, offset))
-            print("Literal %d: FIXED  %lf" % (literalNumber, value))
+            print("Literal %4d: FIXED  %lf" % (literalNumber, value))
         elif type == 2:
-            value = formWord(page2, offset)
-            print("Literal %d: BIT    %d" % (literalNumber, value))
-    recordOffset += 1560
+            print("Literal %4d: BIT    %d" % (literalNumber, value))
+

@@ -52,6 +52,7 @@
  *                              If so, I see no hint of it in either the code
  *                              or the actual behavior.  At any rate, it's
  *                              more subtle than I thought.
+ *              2026-04-08 RSB  Added `debugX`.
  *
  * The functions herein are documented in runtimeC.h.
  *
@@ -227,6 +228,7 @@ void writeZipfile(gzFile dest) {
 // Global variables.
 
 // Extern'd in runtimeC.h or configuration.h:
+int debugX = 0;
 int outUTF8 = 0;
 DCB_t DCB_INS[DCB_MAX];
 DCB_t DCB_OUTS[DCB_MAX];
@@ -914,6 +916,8 @@ parseCommandLine(int argc, char **argv)
 #endif
       else if (1 == sscanf(argv[i], "--watch=%d", &j))
         watchpoint = j;
+      else if (1 == sscanf(argv[i], "--debug=%X", &j))
+	debugX = j;
       else if (2 == sscanf(argv[i], "--extra=%d,%c", &lun, &c))
         {
           if (lun < 0 || lun >= DCB_MAX)
@@ -1193,6 +1197,16 @@ parseCommandLine(int argc, char **argv)
           printf("              XPL compilers.\n");
           printf("--watch=A     (Default none.)  Causes a message to be printed\n");
           printf("              whenever the value of memory[A] changes.\n");
+          printf("--debug=X     Sets the value of a \"debug\" flagword to X,\n");
+          printf("              where X is a hexadecimal number.  This value\n");
+          printf("              is generally ignored, and even when not, the\n");
+          printf("              values of most flags are ignored.  The\n");
+          printf("              intention is to enable ad hoc debugging modes\n");
+          printf("              without endlessly increasing the number of \n");
+          printf("              supported command-line parameters.  To determine\n");
+          printf("              which flags are recognized by which programs,\n");
+          printf("              search for the variable `debugX` variable in\n");
+          printf("              XPL/I INLINE calls or in C runtime-library source.\n");
 #ifdef RSB_TRACE
           printf("--rsb-trace=N Set trigger trace number in my customized\n");
           printf("              production-trace function.  If N<0 (the default)\n");

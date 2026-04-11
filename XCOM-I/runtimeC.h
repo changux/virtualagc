@@ -16,6 +16,7 @@
  *                              `readCOMMON()`, since they never vary.
  *              2026-03-08 RSB  Increased PDS buffer size from 672 lines to
  *                              20000 lines.
+ *              2026-04-08 RSB  Added `debugX`.
  */
 
 #ifndef RUNTIMEC_H
@@ -77,6 +78,7 @@ typedef char sbuf_t[MAX_XPL_STRING + 1];
 #define RETURN(...) return (__VA_ARGS__)
 #endif
 
+extern int debugX;
 extern int outUTF8;
 // "Device control blocks" for sequential files and PDS.  These have nothing
 // to do with IBM 360 DCBs.
